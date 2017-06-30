@@ -105,12 +105,16 @@ static inline int blas_quickdivide(blasint x, blasint y){
 #define PROLOGUE \
 	.arm		 ;\
 	.global	REALNAME ;\
-	.func	REALNAME  ;\
 REALNAME:
 
 #define EPILOGUE
 
 #define PROFCODE
+
+#ifdef __ARM_PCS
+//-mfloat-abi=softfp
+#define SOFT_FLOAT_ABI
+#endif
 
 #endif
 

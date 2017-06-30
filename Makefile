@@ -81,7 +81,7 @@ endif
 
 shared :
 ifndef NO_SHARED
-ifeq ($(OSNAME), $(filter $(OSNAME),Linux SunOS))
+ifeq ($(OSNAME), $(filter $(OSNAME),Linux SunOS Android))
 	@$(MAKE) -C exports so
 	@ln -fs $(LIBSONAME) $(LIBPREFIX).so
 	@ln -fs $(LIBSONAME) $(LIBPREFIX).so.$(MAJOR_VERSION)
@@ -108,8 +108,6 @@ endif
 
 tests :
 ifndef NOFORTRAN
-ifndef TARGET
-ifndef CROSS
 	touch $(LIBNAME)
 ifndef NO_FBLAS
 	$(MAKE) -C test all
@@ -117,8 +115,6 @@ ifndef NO_FBLAS
 endif
 ifndef NO_CBLAS
 	$(MAKE) -C ctest all
-endif
-endif
 endif
 endif
 
@@ -282,13 +278,13 @@ lapack-timing : large.tgz timing.tgz
 ifndef NOFORTRAN
 	(cd $(NETLIB_LAPACK_DIR); $(TAR) zxf ../timing.tgz TIMING)
 	(cd $(NETLIB_LAPACK_DIR)/TIMING; $(TAR) zxf ../../large.tgz )
-	make -C $(NETLIB_LAPACK_DIR)/TIMING
+	$(MAKE) -C $(NETLIB_LAPACK_DIR)/TIMING
 endif
 
 
 lapack-test :
 	(cd $(NETLIB_LAPACK_DIR)/TESTING && rm -f x* *.out)
-	make -j 1 -C $(NETLIB_LAPACK_DIR)/TESTING xeigtstc  xeigtstd  xeigtsts  xeigtstz  xlintstc  xlintstd  xlintstds  xlintstrfd  xlintstrfz  xlintsts  xlintstz  xlintstzc xlintstrfs xlintstrfc
+	$(MAKE) -j 1 -C $(NETLIB_LAPACK_DIR)/TESTING xeigtstc  xeigtstd  xeigtsts  xeigtstz  xlintstc  xlintstd  xlintstds  xlintstrfd  xlintstrfz  xlintsts  xlintstz  xlintstzc xlintstrfs xlintstrfc
 ifneq ($(CROSS), 1)
 	( cd $(NETLIB_LAPACK_DIR)/INSTALL; ./testlsame; ./testslamch; ./testdlamch; \
         ./testsecond; ./testdsecnd; ./testieee; ./testversion )
@@ -303,7 +299,7 @@ lapack-runtest:
 
 blas-test:
 	(cd $(NETLIB_LAPACK_DIR)/BLAS && rm -f x* *.out)
-	make -j 1 -C $(NETLIB_LAPACK_DIR) blas_testing
+	$(MAKE) -j 1 -C $(NETLIB_LAPACK_DIR) blas_testing
 	(cd $(NETLIB_LAPACK_DIR)/BLAS && cat *.out)
 
 
@@ -333,3 +329,8 @@ endif
 	@rm -f *.grd Makefile.conf_last config_last.h
 	@(cd $(NETLIB_LAPACK_DIR)/TESTING && rm -f x* *.out testing_results.txt)
 	@echo Done.
+
+# Makefile debugging trick:
+# call print-VARIABLE to see the runtime value of any variable
+print-%:
+	@echo '$*=$($*)'

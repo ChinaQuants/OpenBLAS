@@ -43,6 +43,35 @@ On X86 box, compile this library for loongson3a CPU with loongcc (based on Open6
 
     make DEBUG=1
 
+### Compile with MASS Support on Power CPU (Optional dependency)
+
+[IBM MASS](http://www-01.ibm.com/software/awdtools/mass/linux/mass-linux.html) library consists of a set of mathematical functions for C, C++, and
+Fortran-language applications that are tuned for optimum performance on POWER architectures. OpenBLAS with MASS requires 64-bit, little-endian OS on POWER.
+The library can be installed as below -
+
+ * On Ubuntu:
+
+    wget -q http://public.dhe.ibm.com/software/server/POWER/Linux/xl-compiler/eval/ppc64le/ubuntu/public.gpg -O- | sudo apt-key add -</br>
+    echo "deb http://public.dhe.ibm.com/software/server/POWER/Linux/xl-compiler/eval/ppc64le/ubuntu/ trusty main" | sudo tee /etc/apt/sources.list.d/ibm-xl-compiler-eval.list</br>
+    sudo apt-get update</br>
+    sudo apt-get install libxlmass-devel.8.1.5</br>
+
+ * On RHEL/CentOS:
+
+    wget http://public.dhe.ibm.com/software/server/POWER/Linux/xl-compiler/eval/ppc64le/rhel7/repodata/repomd.xml.key</br>
+    sudo rpm --import repomd.xml.key</br>
+    wget http://public.dhe.ibm.com/software/server/POWER/Linux/xl-compiler/eval/ppc64le/rhel7/ibm-xl-compiler-eval.repo</br>
+    sudo cp ibm-xl-compiler-eval.repo /etc/yum.repos.d/</br>
+    sudo yum install libxlmass-devel.8.1.5</br>
+
+After installing MASS library, compile openblas with USE_MASS=1.
+
+Example:
+
+Compiling on Power8 with MASS support -
+
+    make USE_MASS=1 TARGET=POWER8
+
 ### Install to the directory (optional)
 
 Example:
@@ -77,11 +106,16 @@ Please read GotoBLAS_01Readme.txt
 - **ARMV8**: Experimental
 - **ARM Cortex-A57**: Experimental
 
+#### IBM zEnterprise System:
+- **Z13**: Optimized Level-3 BLAS 
+     
+
 ### Support OS:
 - **GNU/Linux**
 - **MingWin or Visual Studio(CMake)/Windows**: Please read <https://github.com/xianyi/OpenBLAS/wiki/How-to-use-OpenBLAS-in-Microsoft-Visual-Studio>.
 - **Darwin/Mac OS X**: Experimental. Although GotoBLAS2 supports Darwin, we are the beginner on Mac OS X.
 - **FreeBSD**: Supported by community. We didn't test the library on this OS.
+- **Android**: Supported by community. Please read <https://github.com/xianyi/OpenBLAS/wiki/How-to-build-OpenBLAS-for-Android>.
 
 ## Usages
 Link with libopenblas.a or -lopenblas for shared library.

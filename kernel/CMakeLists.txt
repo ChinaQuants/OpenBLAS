@@ -1,6 +1,6 @@
 
-include_directories(${CMAKE_SOURCE_DIR})
-include("${CMAKE_SOURCE_DIR}/cmake/kernel.cmake")
+include_directories(${PROJECT_SOURCE_DIR})
+include("${PROJECT_SOURCE_DIR}/cmake/kernel.cmake")
 
 # Makefile
 
@@ -118,7 +118,7 @@ endforeach ()
 # Makefile.L3
 set(USE_TRMM false)
 
-if (${ARCH} STREQUAL "arm" OR ${ARCH} STREQUAL "arm64" OR "${TARGET}" STREQUAL "LONGSOON3B" OR "${TARGET}" STREQUAL "GENERIC" OR "${CORE}" STREQUAL "generic" OR "${TARGET}" STREQUAL "HASWELL" OR "${CORE}" STREQUAL "haswell")
+if (${ARCH} STREQUAL "arm" OR ${ARCH} STREQUAL "arm64" OR "${TARGET}" STREQUAL "LONGSOON3B" OR "${TARGET}" STREQUAL "GENERIC" OR "${CORE}" STREQUAL "generic" OR "${TARGET}" STREQUAL "HASWELL" OR "${CORE}" STREQUAL "haswell" OR "{CORE}" STREQUAL "zen")
   set(USE_TRMM true)
 endif ()
 

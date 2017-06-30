@@ -3,7 +3,7 @@
 ## Description: Ported from OpenBLAS/Makefile.system
 ##
 
-set(NETLIB_LAPACK_DIR "${CMAKE_SOURCE_DIR}/lapack-netlib")
+set(NETLIB_LAPACK_DIR "${PROJECT_SOURCE_DIR}/lapack-netlib")
 
 # TODO: Makefile.system detects Darwin (mac) and switches to clang here -hpa
 # http://stackoverflow.com/questions/714100/os-detecting-makefile
@@ -22,7 +22,7 @@ if (DEFINED BINARY AND DEFINED TARGET AND BINARY EQUAL 32)
   if (${TARGET} STREQUAL "HASWELL" OR ${TARGET} STREQUAL "SANDYBRIDGE")
     set(TARGET "NEHALEM")
   endif ()
-  if (${TARGET} STREQUAL "BULLDOZER" OR ${TARGET} STREQUAL "PILEDRIVER")
+  if (${TARGET} STREQUAL "BULLDOZER" OR ${TARGET} STREQUAL "PILEDRIVER" OR ${TARGET} STREQUAL "ZEN")
     set(TARGET "BARCELONA")
   endif ()
 endif ()
@@ -78,7 +78,7 @@ else ()
   set(ONLY_CBLAS 0)
 endif ()
 
-include("${CMAKE_SOURCE_DIR}/cmake/prebuild.cmake")
+include("${PROJECT_SOURCE_DIR}/cmake/prebuild.cmake")
 
 if (NOT DEFINED NUM_THREADS)
   set(NUM_THREADS ${NUM_CORES})
@@ -124,17 +124,17 @@ set(OBJCOPY "${CROSS_SUFFIX}objcopy")
 set(OBJCONV "${CROSS_SUFFIX}objconv")
 
 # OS dependent settings
-include("${CMAKE_SOURCE_DIR}/cmake/os.cmake")
+include("${PROJECT_SOURCE_DIR}/cmake/os.cmake")
 
 # Architecture dependent settings
-include("${CMAKE_SOURCE_DIR}/cmake/arch.cmake")
+include("${PROJECT_SOURCE_DIR}/cmake/arch.cmake")
 
 # C Compiler dependent settings
-include("${CMAKE_SOURCE_DIR}/cmake/cc.cmake")
+include("${PROJECT_SOURCE_DIR}/cmake/cc.cmake")
 
 if (NOT NOFORTRAN)
   # Fortran Compiler dependent settings
-  include("${CMAKE_SOURCE_DIR}/cmake/fc.cmake")
+  include("${PROJECT_SOURCE_DIR}/cmake/fc.cmake")
 endif ()
 
 if (BINARY64)
@@ -247,10 +247,10 @@ if (NOT DEFINED SYMBOLSUFFIX)
   set(SYMBOLSUFFIX "")
 endif ()
 
-set(KERNELDIR	"${CMAKE_SOURCE_DIR}/kernel/${ARCH}")
+set(KERNELDIR	"${PROJECT_SOURCE_DIR}/kernel/${ARCH}")
 
 # TODO: nead to convert these Makefiles
-# include ${CMAKE_SOURCE_DIR}/cmake/${ARCH}.cmake
+# include ${PROJECT_SOURCE_DIR}/cmake/${ARCH}.cmake
 
 if (${CORE} STREQUAL "PPC440")
   set(CCOMMON_OPT "${CCOMMON_OPT} -DALLOC_QALLOC")
@@ -311,6 +311,8 @@ if (NOT DEFINED MD5SUM)
 endif ()
 
 set(AWK awk)
+
+set(SED sed)
 
 set(REVISION "-r${OpenBLAS_VERSION}")
 set(MAJOR_VERSION ${OpenBLAS_MAJOR_VERSION})
@@ -410,8 +412,8 @@ set(LIBDEFNAME "${LIBNAME}.${LIBSUFFIX}.def")
 set(LIBEXPNAME "${LIBNAME}.${LIBSUFFIX}.exp")
 set(LIBZIPNAME "${LIBNAME}.${LIBSUFFIX}.zip")
 
-set(LIBS "${CMAKE_SOURCE_DIR}/${LIBNAME}")
-set(LIBS_P "${CMAKE_SOURCE_DIR}/${LIBNAME_P}")
+set(LIBS "${PROJECT_SOURCE_DIR}/${LIBNAME}")
+set(LIBS_P "${PROJECT_SOURCE_DIR}/${LIBNAME_P}")
 
 
 set(LIB_COMPONENTS BLAS)
