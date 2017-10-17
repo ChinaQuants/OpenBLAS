@@ -332,6 +332,13 @@ typedef int blasint;
 #endif
 #endif
 
+#ifdef POWER8
+#ifndef YIELDING
+#define YIELDING        __asm__ __volatile__ ("nop;nop;nop;nop;nop;nop;nop;nop;\n");
+#endif
+#endif
+
+
 /*
 #ifdef PILEDRIVER
 #ifndef YIELDING
@@ -397,6 +404,10 @@ please https://github.com/xianyi/OpenBLAS/issues/246
 #include "common_sparc.h"
 #endif
 
+#ifdef ARCH_MIPS
+#include "common_mips.h"
+#endif
+
 #ifdef ARCH_MIPS64
 #include "common_mips64.h"
 #endif
@@ -409,13 +420,22 @@ please https://github.com/xianyi/OpenBLAS/issues/246
 #include "common_arm64.h"
 #endif
 
+#ifdef ARCH_ZARCH
+#include "common_zarch.h"
+#endif
+
 #ifndef ASSEMBLER
+#ifdef OS_WINDOWSSTORE
+typedef char env_var_t[MAX_PATH];
+#define readenv(p, n) 0
+#else
 #ifdef OS_WINDOWS
 typedef char env_var_t[MAX_PATH];
 #define readenv(p, n) GetEnvironmentVariable((LPCTSTR)(n), (LPTSTR)(p), sizeof(p))
 #else
 typedef char* env_var_t;
 #define readenv(p, n) ((p)=getenv(n))
+#endif
 #endif
 
 #if !defined(RPCC_DEFINED) && !defined(OS_WINDOWS)
@@ -541,8 +561,13 @@ static void __inline blas_lock(volatile BLASULONG *address){
 #endif
 
 #if defined(C_PGI) || defined(C_SUN)
-#define CREAL(X)	(*((FLOAT *)&X + 0))
-#define CIMAG(X)	(*((FLOAT *)&X + 1))
+  #if defined(__STDC_IEC_559_COMPLEX__)
+     #define CREAL(X)   creal(X)
+     #define CIMAG(X)   cimag(X)
+  #else
+     #define CREAL(X)	(*((FLOAT *)&X + 0))
+     #define CIMAG(X)	(*((FLOAT *)&X + 1))
+  #endif
 #else
 #ifdef OPENBLAS_COMPLEX_STRUCT
 #define CREAL(Z)	((Z).real)
@@ -615,8 +640,13 @@ void gotoblas_profile_init(void);
 void gotoblas_profile_quit(void);
 
 #ifdef USE_OPENMP
+#ifndef C_MSVC
 int omp_in_parallel(void);
 int omp_get_num_procs(void);
+#else
+__declspec(dllimport) int __cdecl omp_in_parallel(void);
+__declspec(dllimport) int __cdecl omp_get_num_procs(void);
+#endif
 #else
 #ifdef __ELF__
 int omp_in_parallel  (void) __attribute__ ((weak));
@@ -629,7 +659,11 @@ static __inline void blas_unlock(volatile BLASULONG *address){
   *address = 0;
 }
 
-
+#ifdef OS_WINDOWSSTORE
+static __inline int readenv_atoi(char *env) {
+	return 0;
+}
+#else
 #ifdef OS_WINDOWS
 static __inline int readenv_atoi(char *env) {
   env_var_t p;
@@ -644,7 +678,7 @@ static __inline int readenv_atoi(char *env) {
 	return(0);
 }
 #endif
-
+#endif
 
 #if !defined(XDOUBLE) || !defined(QUAD_PRECISION)
 

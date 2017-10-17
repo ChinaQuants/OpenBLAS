@@ -1,4 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR})
+include_directories(${PROJECT_SOURCE_DIR})
 
 if (${CORE} STREQUAL "PPC440")
   set(MEMORY memory_qalloc.c)
@@ -11,6 +11,8 @@ if (SMP)
   if (USE_OPENMP)
     set(BLAS_SERVER blas_server_omp.c)
   elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    set(BLAS_SERVER blas_server_win32.c)
+  elseif (${CMAKE_SYSTEM_NAME} STREQUAL "WindowsStore")
     set(BLAS_SERVER blas_server_win32.c)
   endif ()
 

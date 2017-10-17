@@ -147,5 +147,24 @@ In chronological order:
   * [2016-03-14] Additional functional Assembly Kernels for Cortex-A57
   * [2016-03-14] Optimize Dgemm 4x4 for Cortex-A57
 
-* [Your name or handle] <[email or website]>
-  * [Date] [Brief summary of your changes]
+* theoractice <https://github.com/theoractice/>
+  * [2016-03-20] Fix compiler error in VisualStudio with CMake
+  * [2016-03-22] Fix access violation on Windows while static linking
+
+* Paul Mustière <https://github.com/buffer51/>
+  * [2016-02-04] Fix Android build on ARMV7
+  * [2016-04-26] Android build with LAPACK for ARMV7 & ARMV8
+
+* Shivraj Patil <https://github.com/sva-img/>
+  * [2016-05-03] DGEMM optimization for MIPS P5600 and I6400 using MSA
+
+* Kaustubh Raste <https://github.com/ksraste/>
+  * [2016-05-09] DTRSM optimization for MIPS P5600 and I6400 using MSA
+  * [2016-05-20] STRSM optimization for MIPS P5600 and I6400 using MSA
+
+* Abdelrauf  <https://github.com/quickwritereader>
+  * [2017-01-01] dgemm and dtrmm kernels for IBM z13
+  * [2017-02-26] ztrmm kernel for IBM z13
+  * [2017-03-13] strmm and ctrmm kernel for IBM z13
+
+
