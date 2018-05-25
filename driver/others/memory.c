@@ -74,7 +74,7 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common.h"
 #include <errno.h>
 
-#ifdef OS_WINDOWS
+#if defined(OS_WINDOWS) && !defined(OS_CYGWIN_NT)
 #define ALLOC_WINDOWS
 #ifndef MEM_LARGE_PAGES
 #define MEM_LARGE_PAGES  0x20000000
@@ -88,7 +88,7 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <fcntl.h>
 
-#ifndef OS_WINDOWS
+#if !defined(OS_WINDOWS) || defined(OS_CYGWIN_NT)
 #include <sys/mman.h>
 #ifndef NO_SYSV_IPC
 #include <sys/shm.h>
@@ -108,7 +108,7 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/resource.h>
 #endif
 
-#if defined(OS_FREEBSD) || defined(OS_DARWIN)
+#if defined(OS_FREEBSD) || defined(OS_OPENBSD) || defined(OS_DRAGONFLY) || defined(OS_DARWIN)
 #include <sys/sysctl.h>
 #include <sys/resource.h>
 #endif
@@ -147,9 +147,12 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #elif (defined(OS_DARWIN) || defined(OS_SUNOS)) && defined(C_GCC)
 #define CONSTRUCTOR	__attribute__ ((constructor))
 #define DESTRUCTOR	__attribute__ ((destructor))
-#else
+#elif __GNUC__ && INIT_PRIORITY && ((GCC_VERSION >= 40300) || (CLANG_VERSION >= 20900))
 #define CONSTRUCTOR	__attribute__ ((constructor(101)))
 #define DESTRUCTOR	__attribute__ ((destructor(101)))
+#else
+#define CONSTRUCTOR	__attribute__ ((constructor))
+#define DESTRUCTOR	__attribute__ ((destructor))
 #endif
 
 #ifdef DYNAMIC_ARCH
@@ -177,7 +180,7 @@ int get_num_procs(void) {
 cpu_set_t *cpusetp;
 size_t size;
 int ret;
-int i,n;
+// int i,n;
 
   if (!nums) nums = sysconf(_SC_NPROCESSORS_CONF);
 #if !defined(OS_LINUX)
@@ -209,7 +212,8 @@ int i,n;
   size = CPU_ALLOC_SIZE(nums);
   ret = sched_getaffinity(0,size,cpusetp);
   if (ret!=0) return nums;
-  nums = CPU_COUNT_S(size,cpusetp);
+  ret = CPU_COUNT_S(size,cpusetp);
+  if (ret > 0 && ret < nums) nums = ret;	
   CPU_FREE(cpusetp);
   return nums;
  #endif
@@ -246,7 +250,7 @@ int get_num_procs(void) {
 
 #endif
 
-#if defined(OS_FREEBSD)
+#if defined(OS_FREEBSD) || defined(OS_OPENBSD) || defined(OS_DRAGONFLY)
 
 int get_num_procs(void) {
 
@@ -323,7 +327,7 @@ void openblas_fork_handler()
   //   http://gcc.gnu.org/bugzilla/show_bug.cgi?id=60035
   // In the mean time build with USE_OPENMP=0 or link against another
   // implementation of OpenMP.
-#if !(defined(OS_WINDOWS) || defined(OS_ANDROID)) && defined(SMP_SERVER)
+#if !((defined(OS_WINDOWS) && !defined(OS_CYGWIN_NT)) || defined(OS_ANDROID)) && defined(SMP_SERVER)
   int err;
   err = pthread_atfork ((void (*)(void)) BLASFUNC(blas_thread_shutdown), NULL, NULL);
   if(err != 0)
@@ -336,7 +340,7 @@ extern int openblas_goto_num_threads_env();
 extern int openblas_omp_num_threads_env();
 
 int blas_get_cpu_number(void){
-#if defined(OS_LINUX) || defined(OS_WINDOWS) || defined(OS_FREEBSD) || defined(OS_DARWIN) || defined(OS_ANDROID)
+#if defined(OS_LINUX) || defined(OS_WINDOWS) || defined(OS_FREEBSD) || defined(OS_OPENBSD) || defined(OS_DRAGONFLY) || defined(OS_DARWIN) || defined(OS_ANDROID)
   int max_num;
 #endif
   int blas_goto_num   = 0;
@@ -344,11 +348,11 @@ int blas_get_cpu_number(void){
 
   if (blas_num_threads) return blas_num_threads;
 
-#if defined(OS_LINUX) || defined(OS_WINDOWS) || defined(OS_FREEBSD) || defined(OS_DARWIN) || defined(OS_ANDROID)
+#if defined(OS_LINUX) || defined(OS_WINDOWS) || defined(OS_FREEBSD) || defined(OS_OPENBSD) || defined(OS_DRAGONFLY) || defined(OS_DARWIN) || defined(OS_ANDROID)
   max_num = get_num_procs();
 #endif
 
-  blas_goto_num = 0;
+  // blas_goto_num = 0;
 #ifndef USE_OPENMP
   blas_goto_num=openblas_num_threads_env();
   if (blas_goto_num < 0) blas_goto_num = 0;
@@ -360,7 +364,7 @@ int blas_get_cpu_number(void){
 
 #endif
 
-  blas_omp_num = 0;
+  // blas_omp_num = 0;
   blas_omp_num=openblas_omp_num_threads_env();
   if (blas_omp_num < 0) blas_omp_num = 0;
 
@@ -368,7 +372,7 @@ int blas_get_cpu_number(void){
   else if (blas_omp_num > 0) blas_num_threads = blas_omp_num;
   else blas_num_threads = MAX_CPU_NUMBER;
 
-#if defined(OS_LINUX) || defined(OS_WINDOWS) || defined(OS_FREEBSD) || defined(OS_DARWIN) || defined(OS_ANDROID)
+#if defined(OS_LINUX) || defined(OS_WINDOWS) || defined(OS_FREEBSD) || defined(OS_OPENBSD) || defined(OS_DRAGONFLY) || defined(OS_DARWIN) || defined(OS_ANDROID)
   if (blas_num_threads > max_num) blas_num_threads = max_num;
 #endif
 
@@ -455,11 +459,15 @@ static void *alloc_mmap(void *address){
   }
 
   if (map_address != (void *)-1) {
+#if defined(SMP) && !defined(USE_OPENMP)
     LOCK_COMMAND(&alloc_lock);
+#endif    
     release_info[release_pos].address = map_address;
     release_info[release_pos].func    = alloc_mmap_free;
     release_pos ++;
+#if defined(SMP) && !defined(USE_OPENMP)
     UNLOCK_COMMAND(&alloc_lock);
+#endif    
   }
 
 #ifdef OS_LINUX
@@ -601,14 +609,18 @@ static void *alloc_mmap(void *address){
 #if defined(OS_LINUX) && !defined(NO_WARMUP)
   }
 #endif
-  LOCK_COMMAND(&alloc_lock);
 
   if (map_address != (void *)-1) {
+#if defined(SMP) && !defined(USE_OPENMP)
+    LOCK_COMMAND(&alloc_lock);
+#endif
     release_info[release_pos].address = map_address;
     release_info[release_pos].func    = alloc_mmap_free;
     release_pos ++;
+#if defined(SMP) && !defined(USE_OPENMP)
+    UNLOCK_COMMAND(&alloc_lock);
+#endif
   }
-  UNLOCK_COMMAND(&alloc_lock);
 
   return map_address;
 }
@@ -1007,6 +1019,11 @@ void *blas_memory_alloc(int procpos){
     NULL,
   };
   void *(**func)(void *address);
+
+#if defined(USE_OPENMP)
+  if (!memory_initialized) {
+#endif
+
   LOCK_COMMAND(&alloc_lock);
 
   if (!memory_initialized) {
@@ -1042,6 +1059,9 @@ void *blas_memory_alloc(int procpos){
 
   }
   UNLOCK_COMMAND(&alloc_lock);
+#if defined(USE_OPENMP)
+  }
+#endif
 
 #ifdef DEBUG
   printf("Alloc Start ...\n");
@@ -1056,13 +1076,17 @@ void *blas_memory_alloc(int procpos){
 
   do {
     if (!memory[position].used && (memory[position].pos == mypos)) {
+#if defined(SMP) && !defined(USE_OPENMP)
       LOCK_COMMAND(&alloc_lock);
-/*      blas_lock(&memory[position].lock);*/
-
+#else      
+      blas_lock(&memory[position].lock);
+#endif
       if (!memory[position].used) goto allocation;
-
+#if defined(SMP) && !defined(USE_OPENMP)
       UNLOCK_COMMAND(&alloc_lock);
-/*      blas_unlock(&memory[position].lock);*/
+#else
+      blas_unlock(&memory[position].lock);
+#endif      
     }
 
     position ++;
@@ -1075,15 +1099,19 @@ void *blas_memory_alloc(int procpos){
   position = 0;
 
   do {
-/*    if (!memory[position].used) { */
+#if defined(SMP) && !defined(USE_OPENMP)
       LOCK_COMMAND(&alloc_lock);
-/*      blas_lock(&memory[position].lock);*/
-
+#else
+    if (!memory[position].used) { 
+      blas_lock(&memory[position].lock);
+#endif
       if (!memory[position].used) goto allocation;
-      
+#if defined(SMP) && !defined(USE_OPENMP)
       UNLOCK_COMMAND(&alloc_lock);
-/*      blas_unlock(&memory[position].lock);*/
-/*    } */
+#else      
+      blas_unlock(&memory[position].lock);
+      }
+#endif
 
     position ++;
 
@@ -1098,9 +1126,11 @@ void *blas_memory_alloc(int procpos){
 #endif
 
   memory[position].used = 1;
-
+#if defined(SMP) && !defined(USE_OPENMP)
   UNLOCK_COMMAND(&alloc_lock);
-/*  blas_unlock(&memory[position].lock);*/
+#else
+  blas_unlock(&memory[position].lock);
+#endif
 
   if (!memory[position].addr) {
     do {
@@ -1146,9 +1176,13 @@ void *blas_memory_alloc(int procpos){
 
     } while ((BLASLONG)map_address == -1);
 
+#if defined(SMP) && !defined(USE_OPENMP)
     LOCK_COMMAND(&alloc_lock);
+#endif    
     memory[position].addr = map_address;
+#if defined(SMP) && !defined(USE_OPENMP)
     UNLOCK_COMMAND(&alloc_lock);
+#endif
 
 #ifdef DEBUG
     printf("  Mapping Succeeded. %p(%d)\n", (void *)memory[position].addr, position);
@@ -1202,8 +1236,9 @@ void blas_memory_free(void *free_area){
 #endif
 
   position = 0;
+#if defined(SMP) && !defined(USE_OPENMP)
   LOCK_COMMAND(&alloc_lock);
-
+#endif
   while ((position < NUM_BUFFERS) && (memory[position].addr != free_area))
     position++;
 
@@ -1217,7 +1252,9 @@ void blas_memory_free(void *free_area){
   WMB;
 
   memory[position].used = 0;
+#if defined(SMP) && !defined(USE_OPENMP)
   UNLOCK_COMMAND(&alloc_lock);
+#endif
 
 #ifdef DEBUG
   printf("Unmap Succeeded.\n\n");
@@ -1232,8 +1269,9 @@ void blas_memory_free(void *free_area){
   for (position = 0; position < NUM_BUFFERS; position++)
     printf("%4ld  %p : %d\n", position, memory[position].addr, memory[position].used);
 #endif
+#if defined(SMP) && !defined(USE_OPENMP)
   UNLOCK_COMMAND(&alloc_lock);
-
+#endif
   return;
 }
 

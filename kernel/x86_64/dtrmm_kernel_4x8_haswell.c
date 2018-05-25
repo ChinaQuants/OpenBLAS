@@ -24,7 +24,7 @@ static void dtrmm_kernel_4x8( BLASLONG n, FLOAT *alpha ,FLOAT *a, FLOAT *b, FLOA
 		"	cmp $0, %1						\n\t"
 		"	jz 2f							\n\t"
 
-		"	.align 16						\n\t"
+		"	.p2align 4						\n\t"
 		"1:								\n\t"
 		"	vmovups   	(%2,%0,4) , %%ymm0			\n\t"
 		"	vmovups   	(%3,%0,8) , %%ymm1			\n\t"
@@ -777,9 +777,9 @@ int CNAME(BLASLONG bm,BLASLONG bn,BLASLONG bk,FLOAT alpha,FLOAT* ba,FLOAT* bb,FL
 		res3_2 = 0;
 		res3_3 = 0;
 
-                temp = backwards ? bk-off :
-                             left ? off + 4 : // number of values in A
-                                    off + 4;  // number of values in B
+                temp = backwards ? bk-off : off + 4;
+                            /* left ? off + 4 : // number of values in A
+                                    off + 4;  // number of values in B */
 
 		for (k=0; k<temp; k++)
                 {
@@ -857,9 +857,9 @@ int CNAME(BLASLONG bm,BLASLONG bn,BLASLONG bk,FLOAT alpha,FLOAT* ba,FLOAT* bb,FL
 		C3[3] = res3_3;
 
 		if (!backwards) {
-                    temp = bk-off;
-                    temp = left ? temp - 4 : // number of values in A
-                                  temp - 4;  // number of values in B
+                    temp = bk-off - 4;
+                    /* temp = left ? temp - 4 : // number of values in A
+                                  temp - 4;  // number of values in B */
 
                     ptrba += temp*4; // number of values in A
 		    ptrbb += temp*4; // number of values in B

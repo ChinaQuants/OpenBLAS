@@ -128,6 +128,8 @@ so : ../$(LIBSONAME)
 
 ifeq ($(OSNAME), Android)
 INTERNALNAME = $(LIBPREFIX).so
+FEXTRALIB += -lm
+EXTRALIB += -lm
 else
 INTERNALNAME = $(LIBPREFIX).so.$(MAJOR_VERSION)
 endif
@@ -156,7 +158,7 @@ endif
 endif
 
 #http://stackoverflow.com/questions/7656425/makefile-ifeq-logical-or
-ifeq ($(OSNAME), $(filter $(OSNAME),FreeBSD NetBSD))
+ifeq ($(OSNAME), $(filter $(OSNAME),FreeBSD OpenBSD NetBSD DragonFly))
 
 so : ../$(LIBSONAME)
 

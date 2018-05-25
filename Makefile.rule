@@ -60,6 +60,13 @@ VERSION = 0.3.0.dev
 # automatically detected by the the script.
 # NUM_THREADS = 24
 
+# If you have enabled USE_OPENMP and your application would call
+# OpenBLAS's calculation API from multi threads, please comment it in.
+# This flag defines how many instances of OpenBLAS's calculation API can 
+# actually run in parallel. If more threads call OpenBLAS's calculation API,
+# they need to wait for the preceding API calls to finish or risk data corruption.
+# NUM_PARALLEL = 2
+
 # if you don't need to install the static library, please comment it in.
 # NO_STATIC = 1
 
@@ -100,7 +107,7 @@ BUILD_LAPACK_DEPRECATED = 1
 NO_WARMUP = 1
 
 # If you want to disable CPU/Memory affinity on Linux.
-#NO_AFFINITY = 1
+NO_AFFINITY = 1
 
 # if you are compiling for Linux and you have more than 16 numa nodes or more than 256 cpus
 # BIGNUMA = 1

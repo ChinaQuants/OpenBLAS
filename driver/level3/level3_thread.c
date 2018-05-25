@@ -91,7 +91,12 @@
 #endif
 
 typedef struct {
-  volatile BLASLONG working[MAX_CPU_NUMBER][CACHE_LINE_SIZE * DIVIDE_RATE];
+#if __STDC_VERSION__ >= 201112L
+_Atomic
+#else  
+  volatile
+#endif
+   BLASLONG working[MAX_CPU_NUMBER][CACHE_LINE_SIZE * DIVIDE_RATE];
 } job_t;
 
 
@@ -295,9 +300,9 @@ static int inner_thread(blas_arg_t *args, BLASLONG *range_m, BLASLONG *range_n, 
 
   /* Return early if no more computation is needed */
   if ((k == 0) || (alpha == NULL)) return 0;
-  if ((alpha[0] == ZERO)
+  if (alpha[0] == ZERO
 #ifdef COMPLEX
-      && (alpha[1] == ZERO)
+      && alpha[1] == ZERO
 #endif
       ) return 0;
 
